@@ -1,4 +1,5 @@
 pub mod core;
+pub mod crayon;
 #[cfg(feature = "nodejs_crypto")]
 pub mod crypto;
 pub mod encoding;
