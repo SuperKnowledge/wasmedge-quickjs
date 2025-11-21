@@ -5,6 +5,8 @@ use crate::{quickjs_sys::AsObject, Context, JsValue};
 extern "C" {
     fn __crayon_get_event(ptr: i32, len: i32) -> i32;
     fn __crayon_send_response(ptr: i32, len: i32) -> i32;
+    fn __crayon_invoke_cap(ptr: i32, len: i32) -> i32;
+    fn __crayon_read_invoke_response(ptr: i32, len: i32) -> i32;
 }
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -15,10 +17,18 @@ mod host_shim {
     pub unsafe fn __crayon_send_response(_ptr: i32, _len: i32) -> i32 {
         -1
     }
+    pub unsafe fn __crayon_invoke_cap(_ptr: i32, _len: i32) -> i32 {
+        -1
+    }
+    pub unsafe fn __crayon_read_invoke_response(_ptr: i32, _len: i32) -> i32 {
+        -1
+    }
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-use host_shim::{__crayon_get_event, __crayon_send_response};
+use host_shim::{
+    __crayon_get_event, __crayon_invoke_cap, __crayon_read_invoke_response, __crayon_send_response,
+};
 
 pub fn init_crayon_host(ctx: &mut Context) {
     fn read_arg(argv: &[JsValue], idx: usize) -> i32 {
@@ -50,6 +60,24 @@ pub fn init_crayon_host(ctx: &mut Context) {
         JsValue::Int(rc)
     }
 
+    fn js_crayon_invoke_cap(_ctx: &mut Context, _this: JsValue, argv: &[JsValue]) -> JsValue {
+        let ptr = read_arg(argv, 0);
+        let len = read_arg(argv, 1);
+        let rc = unsafe { __crayon_invoke_cap(ptr, len) };
+        JsValue::Int(rc)
+    }
+
+    fn js_crayon_read_invoke_response(
+        _ctx: &mut Context,
+        _this: JsValue,
+        argv: &[JsValue],
+    ) -> JsValue {
+        let ptr = read_arg(argv, 0);
+        let len = read_arg(argv, 1);
+        let rc = unsafe { __crayon_read_invoke_response(ptr, len) };
+        JsValue::Int(rc)
+    }
+
     let mut global = ctx.get_global();
     global.set(
         "__crayon_get_event",
@@ -60,5 +88,18 @@ pub fn init_crayon_host(ctx: &mut Context) {
         "__crayon_send_response",
         ctx.wrap_function("__crayon_send_response", js_crayon_send_response)
             .into(),
+    );
+    global.set(
+        "__crayon_invoke_cap",
+        ctx.wrap_function("__crayon_invoke_cap", js_crayon_invoke_cap)
+            .into(),
+    );
+    global.set(
+        "__crayon_read_invoke_response",
+        ctx.wrap_function(
+            "__crayon_read_invoke_response",
+            js_crayon_read_invoke_response,
+        )
+        .into(),
     );
 }

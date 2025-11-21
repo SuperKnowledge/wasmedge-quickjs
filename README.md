@@ -20,7 +20,7 @@ cargo build --target wasm32-wasi --release
 for macOS, you may need to set the `WASI_SDK_PATH` environment variable before building:
 ```bash
 export CC="${WASI_SDK_PATH}/bin/clang --sysroot=${WASI_SDK_PATH}/share/wasi-sysroot"
-cargo build --target wasm32-wasi --release
+cargo build --target wasm32-wasip1 --release
 ```
 you will get the wasm file at `target/wasm32-wasip1/release/wasmedge_quickjs.wasm`
 
